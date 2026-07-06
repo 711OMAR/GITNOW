@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto Memories — Correspondence Ledger</title>
+<meta name="description" content="A quiet, black-and-white desk for open-source research — usernames, domains, images, and public records, gathered as one continuous letter instead of scattered fragments.">
+<meta name="theme-color" content="#0b0b0c">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='13' fill='%230b0b0c'/%3E%3Cpath d='M18 46 L32 14 L46 46 M23 34 H41' stroke='%23eae7df' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta property="og:title" content="Auto Memories — Correspondence Ledger">
+<meta property="og:description" content="A quiet desk for open-source research, gathered as one continuous letter instead of scattered fragments.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://automemoriesdoll.com/">
+<meta name="twitter:card" content="summary">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0b0b0c;
+    --graphite:#141416;
+    --panel:#18181b;
+    --paper:#eae7df;
+    --ash:#8a887f;
+    --ash-dim:#5f5d56;
+    --line:#2c2c2f;
+    --violet:#5b4f68;
+    --violet-glow:#8577a0;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(91,79,104,0.06), transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(91,79,104,0.05), transparent 45%);
+  }
+  ::selection{background:var(--violet);color:var(--paper);}
+
+  a{color:inherit;}
+
+  /* subtle film-grain across the whole page — the one bit of "material" texture */
+  body::after{
+    content:"";
+    position:fixed; inset:0; z-index:999; pointer-events:none;
+    opacity:0.05; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ---------- layout shell ---------- */
+  .page{
+    max-width:1180px;
+    margin:0 auto;
+    padding:48px 32px 96px;
+  }
+
+  /* ---------- header ---------- */
+  header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    border-bottom:1px solid var(--line);
+    padding-bottom:22px;
+    margin-bottom:56px;
+    gap:24px;
+  }
+  .brand{display:flex;align-items:center;gap:18px;}
+  .seal{
+    width:58px;height:58px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+    cursor:default;
+    transition:transform .4s ease;
+  }
+  .seal svg{width:100%;height:100%;color:var(--ash-dim);transition:color .4s ease;}
+  .seal:hover{transform:scale(0.94) rotate(-2deg);}
+  .seal:hover svg{color:var(--violet-glow);}
+  .brand-text .name{
+    font-family:'Cormorant Garamond',serif;
+    font-size:26px; letter-spacing:0.04em; font-weight:600;
+    line-height:1;
+  }
+  .brand-text .sub{
+    font-size:10.5px; letter-spacing:0.22em; text-transform:uppercase;
+    color:var(--ash); margin-top:6px;
+  }
+  .clock{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px; color:var(--ash-dim);
+    text-align:right;
+    letter-spacing:0.03em;
+    padding-top:6px;
+  }
+  .clock span{display:block;color:var(--ash);margin-bottom:3px;}
+
+  /* ---------- hero ---------- */
+  .hero{
+    display:grid;
+    grid-template-columns:1fr 300px;
+    gap:56px;
+    margin-bottom:72px;
+    align-items:center;
+  }
+  .hero h1{
+    font-family:'Cormorant Garamond',serif;
+    font-weight:500;
+    font-size:clamp(30px,4vw,46px);
+    line-height:1.18;
+    margin:0 0 18px;
+    max-width:600px;
+  }
+  .hero h1 em{color:var(--violet-glow);font-style:italic;}
+  .hero p.lede{
+    color:var(--ash);
+    font-size:14.5px;
+    line-height:1.7;
+    max-width:480px;
+    margin:0 0 30px;
+  }
+  .type-line{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    color:var(--ash-dim);
+    border-left:2px solid var(--violet);
+    padding-left:14px;
+    min-height:18px;
+  }
+  .type-line .cursor{
+    display:inline-block;width:7px;height:13px;background:var(--violet-glow);
+    margin-left:2px;vertical-align:-2px;
+    animation:blink 1s steps(1) infinite;
+  }
+  @keyframes blink{50%{opacity:0;}}
+
+  .quill-wrap{display:flex;justify-content:center;}
+  pre.quill{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:9px;
+    line-height:9.5px;
+    color:var(--ash-dim);
+    margin:0;
+    white-space:pre;
+    user-select:none;
+  }
+  pre.quill .lit{color:var(--violet-glow);}
+
+  /* ---------- search console ---------- */
+  .console{
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:26px 28px;
+    margin-bottom:64px;
+    position:relative;
+  }
+  .console::before, .console::after{
+    content:"";
+    position:absolute; width:14px; height:14px;
+    border:1px solid var(--ash-dim);
+  }
+  .console::before{top:-1px;left:-1px;border-right:none;border-bottom:none;}
+  .console::after{bottom:-1px;right:-1px;border-left:none;border-top:none;}
+
+  /* faint ledger-ruling behind the console content, reinforcing the paper motif */
+  .console-inner{
+    position:relative; z-index:1;
+    background-image:repeating-linear-gradient(to bottom, transparent 0 30px, rgba(255,255,255,0.02) 30px 31px);
+  }
+
+  .console-head{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin-bottom:20px;
+  }
+  .console-head h2{
+    font-family:'Cormorant Garamond',serif; font-weight:600;
+    font-size:19px; margin:0; letter-spacing:0.01em;
+  }
+  .console-head .note{
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ash-dim);
+  }
+
+  .tabs{
+    position:relative;
+    display:flex; gap:22px; flex-wrap:wrap;
+    margin-bottom:22px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:0;
+  }
+  .tab{
+    font-family:'Inter',sans-serif; font-size:11px; letter-spacing:0.09em;
+    text-transform:uppercase; color:var(--ash-dim);
+    background:none; border:none;
+    padding:0 0 12px; cursor:pointer;
+    transition:color .25s ease;
+  }
+  .tab:hover{color:var(--ash);}
+  .tab.active{color:var(--paper);}
+  .tab-indicator{
+    position:absolute; bottom:-1px; height:2px;
+    background:var(--violet-glow);
+    transition:left .35s cubic-bezier(.4,0,.2,1), width .35s cubic-bezier(.4,0,.2,1);
+  }
+
+  .search-row{display:flex; gap:12px;}
+  .input-wrap{
+    flex:1; position:relative;
+    display:flex; align-items:center;
+  }
+  .input-wrap svg{
+    position:absolute; left:14px; width:15px; height:15px;
+    color:var(--ash-dim); pointer-events:none;
+    transition:color .2s ease;
+  }
+  .input-wrap:focus-within svg{color:var(--violet-glow);}
+  .search-row input{
+    width:100%;
+    background:var(--ink);
+    border:1px solid var(--line);
+    color:var(--paper);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    padding:14px 16px 14px 40px;
+    outline:none;
+    transition:border-color .2s ease;
+  }
+  .search-row input:focus{border-color:var(--violet-glow);}
+  .search-row input::placeholder{color:var(--ash-dim);}
+  .search-row button{
+    position:relative;
+    overflow:hidden;
+    background:transparent;
+    border:1px solid var(--ash-dim);
+    color:var(--paper);
+    font-family:'Inter',sans-serif; font-size:11.5px; letter-spacing:0.1em; text-transform:uppercase;
+    padding:0 26px;
+    cursor:pointer;
+    transition:border-color .3s ease, color .3s ease;
+    z-index:0;
+  }
+  .search-row button::before{
+    content:"";
+    position:absolute; inset:0;
+    background:var(--violet);
+    transform:scaleX(0); transform-origin:left;
+    transition:transform .35s cubic-bezier(.4,0,.2,1);
+    z-index:-1;
+  }
+  .search-row button:hover{border-color:var(--violet);}
+  .search-row button:hover::before{transform:scaleX(1);}
+
+  .hint{font-size:11px; color:var(--ash-dim); margin-top:14px; font-family:'IBM Plex Mono',monospace;}
+
+  /* ---------- body grid ---------- */
+  .body-grid{
+    display:grid;
+    grid-template-columns:1fr 280px;
+    gap:48px;
+    align-items:start;
+  }
+
+  .section-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px; color:var(--ash-dim); letter-spacing:0.12em;
+    text-transform:uppercase;
+    margin-bottom:20px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section-label::after{content:"";flex:1;height:1px;background:var(--line);}
+  .dossier-lede{
+    font-family:'Cormorant Garamond',serif; font-style:italic;
+    font-size:16px; color:var(--ash); line-height:1.6;
+    margin:0 0 26px; max-width:520px;
+  }
+
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  .card{
+    background:var(--ink);
+    padding:26px 24px 24px;
+    position:relative;
+    overflow:hidden;
+    transition:background .3s ease;
+  }
+  .card::before{
+    content:"";
+    position:absolute; top:0; left:0; height:2px; width:0;
+    background:var(--violet-glow);
+    transition:width .45s cubic-bezier(.4,0,.2,1);
+  }
+  .card:hover{background:var(--graphite);}
+  .card:hover::before{width:100%;}
+  .card .idx{
+    display:flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ash-dim);
+    letter-spacing:0.12em; margin-bottom:16px;
+    position:relative; z-index:1;
+  }
+  .card .idx svg{width:13px;height:13px;color:var(--ash-dim); flex-shrink:0;}
+  .card .idx .roman{color:var(--violet-glow); font-size:10.5px;}
+  .card h3{
+    font-family:'Cormorant Garamond',serif; font-weight:600;
+    font-size:19px; margin:0 0 8px; letter-spacing:0.01em;
+    position:relative; z-index:1;
+  }
+  .card p{
+    font-size:12px; color:var(--ash); line-height:1.62; margin:0 0 16px;
+    min-height:52px;
+    position:relative; z-index:1;
+  }
+  .card .links{display:flex; flex-direction:column; gap:0; position:relative; z-index:1;}
+  .card .links a{
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+    color:var(--ash); text-decoration:none;
+    padding:9px 0; border-top:1px dashed var(--line);
+    transition:color .2s ease, padding-left .2s ease;
+  }
+  .card .links a:hover{color:var(--violet-glow); padding-left:4px;}
+  .card .links a .arrow{opacity:0; transition:opacity .2s ease; font-family:'IBM Plex Mono',monospace;}
+  .card .links a:hover .arrow{opacity:1;}
+
+  /* ---------- custom sources card ---------- */
+  .card.custom{
+    grid-column:1 / -1;
+    border:1px dashed var(--ash-dim);
+    background:var(--ink);
+    display:grid;
+    grid-template-columns:1fr 280px;
+    gap:28px;
+    transition:border-color .3s ease, background .3s ease;
+  }
+  .card.custom:hover{border-color:var(--violet-glow);}
+  .card.custom .custom-main{min-width:0; position:relative; z-index:1;}
+  .card.custom h3{color:var(--paper);}
+  .custom-list{display:flex; flex-direction:column; margin-bottom:0; max-height:210px; overflow-y:auto;}
+  .custom-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 0; border-top:1px dashed var(--line); gap:10px;
+  }
+  .custom-row .site-info{flex:1; min-width:0; cursor:pointer; text-decoration:none; color:inherit; display:flex; flex-direction:column; gap:2px;}
+  .custom-row .site-name{
+    font-family:'Cormorant Garamond',serif; font-weight:600; font-size:14.5px;
+    color:var(--paper); transition:color .2s ease;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .custom-row .site-url{
+    font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ash-dim);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .custom-row .site-info:hover .site-name{color:var(--violet-glow);}
+  .custom-row .rm{
+    background:none; border:none; color:var(--ash-dim); cursor:pointer;
+    font-family:'IBM Plex Mono',monospace; font-size:15px; padding:0 4px;
+    transition:color .2s ease;
+    flex-shrink:0;
+  }
+  .custom-row .rm:hover{color:#c98a8a;}
+  .custom-empty{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ash-dim);
+    padding:10px 0; border-top:1px dashed var(--line);
+  }
+  .add-form{display:flex; flex-direction:column; gap:8px; margin-top:4px; position:relative; z-index:1;}
+  .add-form input{
+    background:var(--graphite); border:1px solid var(--line); color:var(--paper);
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+    padding:8px 10px; outline:none;
+  }
+  .add-form input:focus{border-color:var(--violet-glow);}
+  .add-form input::placeholder{color:var(--ash-dim);}
+  .add-form button{
+    background:transparent; border:1px solid var(--ash-dim); color:var(--paper);
+    font-family:'Inter',sans-serif; font-size:10.5px; letter-spacing:0.1em; text-transform:uppercase;
+    padding:9px 0; cursor:pointer; transition:all .2s ease;
+  }
+  .add-form button:hover{border-color:var(--violet-glow); color:var(--violet-glow);}
+  .add-form .tip{font-size:10px; color:var(--ash-dim); line-height:1.5; font-family:'IBM Plex Mono',monospace;}
+  .add-form .tip code{color:var(--ash);}
+
+  /* ---------- sidebar (correspondence log) ---------- */
+  .ledger{
+    border:1px solid var(--line);
+    background:var(--panel);
+    padding:20px;
+    position:sticky;
+    top:32px;
+  }
+  .ledger h4{
+    font-family:'Cormorant Garamond',serif; font-size:17px; font-weight:600;
+    margin:0 0 4px;
+  }
+  .ledger .desc{font-size:11px; color:var(--ash-dim); margin-bottom:18px; line-height:1.6;}
+  .log-entry{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px;
+    border-top:1px solid var(--line);
+    padding:11px 0;
+    color:var(--ash);
+    display:flex; justify-content:space-between; gap:8px;
+  }
+  .log-entry .cat{color:var(--violet-glow); font-size:9.5px; letter-spacing:0.08em; text-transform:uppercase;}
+  .log-empty{
+    font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ash-dim);
+    padding:24px 0; text-align:center; border-top:1px solid var(--line);
+    line-height:1.7;
+  }
+
+  /* ---------- case map ---------- */
+  .casemap-wrap{margin-top:64px;}
+  .casemap-panel{
+    display:grid;
+    grid-template-columns:1fr 300px;
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  .casemap-svg{
+    background:var(--ink);
+    width:100%; height:420px; display:block;
+  }
+  .cm-node-circle{fill:var(--graphite); stroke:var(--ash-dim); stroke-width:1.3; transition:stroke .2s ease;}
+  .cm-node-root .cm-node-circle{fill:var(--panel); stroke:var(--violet-glow); stroke-width:1.6;}
+  .cm-node:hover .cm-node-circle{stroke:var(--violet-glow);}
+  .cm-node-label{
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; fill:var(--ash);
+    text-anchor:middle; pointer-events:none;
+  }
+  .cm-node-root .cm-node-label{fill:var(--paper); font-family:'Cormorant Garamond',serif; font-size:14px; font-style:italic;}
+  .cm-node-type{
+    font-family:'IBM Plex Mono',monospace; font-size:8px; fill:var(--ash-dim);
+    text-anchor:middle; letter-spacing:0.08em; pointer-events:none;
+  }
+  .cm-edge{stroke:var(--line); stroke-width:1.2;}
+  .cm-node-x{cursor:pointer;}
+  .cm-node-x circle{fill:transparent;}
+  .cm-node-x text{fill:var(--ash-dim); font-family:'IBM Plex Mono',monospace; font-size:11px; text-anchor:middle;}
+  .cm-node-x:hover text{fill:#c98a8a;}
+
+  .casemap-controls{
+    background:var(--panel);
+    padding:22px;
+    display:flex; flex-direction:column; gap:14px;
+  }
+  .cm-field{display:flex; flex-direction:column; gap:6px;}
+  .cm-field label{
+    font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ash-dim);
+    letter-spacing:0.08em; text-transform:uppercase;
+  }
+  .cm-field input, .cm-row select{
+    background:var(--ink); border:1px solid var(--line); color:var(--paper);
+    font-family:'IBM Plex Mono',monospace; font-size:12px;
+    padding:9px 10px; outline:none;
+  }
+  .cm-field input:focus, .cm-row select:focus{border-color:var(--violet-glow);}
+  .cm-row{display:flex; gap:8px;}
+  .cm-row select{flex:1; min-width:0;}
+  .casemap-controls button{
+    background:transparent; border:1px solid var(--ash-dim); color:var(--paper);
+    font-family:'Inter',sans-serif; font-size:11px; letter-spacing:0.1em; text-transform:uppercase;
+    padding:10px 0; cursor:pointer; transition:all .2s ease;
+  }
+  .casemap-controls button:hover{border-color:var(--violet-glow); color:var(--violet-glow);}
+  .cm-list{
+    display:flex; flex-direction:column; gap:0;
+    max-height:150px; overflow-y:auto; margin-top:4px;
+  }
+  .cm-list-row{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ash);
+    padding:8px 0; border-top:1px dashed var(--line);
+  }
+  .cm-list-row .cm-list-type{color:var(--violet-glow); font-size:9px; letter-spacing:0.06em; text-transform:uppercase; margin-right:6px;}
+  .cm-list-row .rm{
+    background:none; border:none; color:var(--ash-dim); cursor:pointer;
+    font-family:'IBM Plex Mono',monospace; font-size:14px; flex-shrink:0;
+  }
+  .cm-list-row .rm:hover{color:#c98a8a;}
+  .cm-empty{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ash-dim);
+    padding:10px 0; border-top:1px dashed var(--line);
+  }
+
+  /* ---------- toast ---------- */
+  .toast{
+    position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--graphite); border:1px solid var(--violet-glow);
+    color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:12px;
+    padding:12px 20px; opacity:0; pointer-events:none;
+    transition:opacity .3s ease, transform .3s ease;
+    z-index:20;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  /* ---------- footer ---------- */
+  footer{
+    margin-top:80px; padding-top:24px; border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ash-dim);
+    letter-spacing:0.04em;
+  }
+  footer em{font-style:italic; color:var(--ash); font-family:'Cormorant Garamond',serif; font-size:13px;}
+
+  @media (max-width:1020px){
+    .cards{grid-template-columns:1fr 1fr;}
+  }
+
+  @media (max-width:880px){
+    .hero{grid-template-columns:1fr;}
+    .quill-wrap{order:-1;}
+    .body-grid{grid-template-columns:1fr;}
+    .cards{grid-template-columns:1fr;}
+    .card.custom{grid-template-columns:1fr;}
+    .ledger{position:static;}
+    .casemap-panel{grid-template-columns:1fr;}
+  }
+
+  @media (max-width:560px){
+    header{flex-wrap:wrap; gap:14px;}
+    .clock{text-align:left;}
+    .brand-text .name{font-size:22px;}
+  }
+
+  :focus-visible{outline:2px solid var(--violet-glow); outline-offset:2px;}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="brand">
+      <div class="seal" title="Auto Memories">
+        <svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="60" cy="60" r="55" stroke-width="1"/>
+          <circle cx="60" cy="60" r="49" stroke-width="0.6" opacity="0.55"/>
+          <path d="M58 94 C40 92, 24 78, 20 56 C18 46, 20 38, 24 32"/>
+          <path d="M25 40 L16 36"/>
+          <path d="M22 50 L13 47"/>
+          <path d="M21 60 L12 59"/>
+          <path d="M23 70 L15 71"/>
+          <path d="M28 80 L21 83"/>
+          <path d="M36 88 L31 93"/>
+          <path d="M62 94 C80 92, 96 78, 100 56 C102 46, 100 38, 96 32"/>
+          <path d="M95 40 L104 36"/>
+          <path d="M98 50 L107 47"/>
+          <path d="M99 60 L108 59"/>
+          <path d="M97 70 L105 71"/>
+          <path d="M92 80 L99 83"/>
+          <path d="M84 88 L89 93"/>
+          <path d="M44 38 L60 80 L76 38" stroke-width="1.7"/>
+          <line x1="52" y1="56" x2="68" y2="56" stroke-width="1.2"/>
+          <line x1="60" y1="80" x2="60" y2="90" stroke-width="1.2"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="name">Auto Memories</div>
+        <div class="sub">Correspondence Ledger</div>
+      </div>
+    </div>
+    <div class="clock">
+      <span>Session opened</span>
+      <span id="sessionTime"></span>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>Every trace is a<br><em>sentence someone left</em><br>unfinished.</h1>
+      <p class="lede">A quiet desk for gathering what's already public — usernames, addresses, domains, faces — and reading them as one continuous letter instead of scattered fragments.</p>
+      <div class="type-line"><span id="typeLine"></span><span class="cursor"></span></div>
+    </div>
+    <div class="quill-wrap">
+      <pre class="quill" id="quillArt"></pre>
+    </div>
+  </div>
+
+  <div class="console">
+    <div class="console-inner">
+      <div class="console-head">
+        <h2>Open a trace</h2>
+        <span class="note">no data leaves this page unless you click a link</span>
+      </div>
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-cat="username">Username</button>
+        <button class="tab" data-cat="email">Email</button>
+        <button class="tab" data-cat="domain">Domain / IP</button>
+        <button class="tab" data-cat="image">Image</button>
+        <button class="tab" data-cat="phone">Phone</button>
+        <button class="tab" data-cat="social">Social</button>
+        <button class="tab" data-cat="archives">Archives</button>
+        <button class="tab" data-cat="frameworks">Frameworks</button>
+        <span class="tab-indicator" id="tabIndicator"></span>
+      </div>
+      <div class="search-row">
+        <div class="input-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 20l6.5-6.5"/><path d="M13 4l1.6 3.4L18 9l-3.4 1.6L13 14l-1.6-3.4L8 9l3.4-1.6z"/></svg>
+          <input type="text" id="queryInput" placeholder="Type what you're tracing — a handle, a domain, an address…">
+        </div>
+        <button id="traceBtn">Trace</button>
+      </div>
+      <div class="hint" id="hintText">Copies your query and opens the tools below in a new tab.</div>
+    </div>
+  </div>
+
+  <div class="body-grid">
+    <div>
+      <div class="section-label">The Dossier</div>
+      <p class="dossier-lede">Six lines of inquiry, each opening onto the others. Start wherever the trail begins.</p>
+      <div class="cards" id="cardGrid"></div>
+    </div>
+
+    <div class="ledger">
+      <h4>Correspondence Log</h4>
+      <div class="desc">Traces opened this session. Cleared when you close the tab — nothing is stored.</div>
+      <div id="logList"><div class="log-empty">— no entries yet —<br>your first trace will<br>be recorded here</div></div>
+    </div>
+  </div>
+
+  <div class="casemap-wrap">
+    <div class="section-label">Case Map</div>
+    <p class="dossier-lede">A working sketch of what you've confirmed — add a node each time you're sure of something, and connect it to what led you there. Nothing here is looked up automatically.</p>
+
+    <div class="casemap-panel">
+      <svg class="casemap-svg" id="casemapSvg" viewBox="0 0 860 420" preserveAspectRatio="xMidYMid meet"></svg>
+
+      <div class="casemap-controls">
+        <div class="cm-field">
+          <label>Root subject</label>
+          <input type="text" id="cmRoot" placeholder="Who or what is this map about?">
+        </div>
+        <div class="cm-field">
+          <label>New node</label>
+          <input type="text" id="cmNodeName" placeholder="e.g. @handle_2021, jdoe@mail.com, Austin TX">
+        </div>
+        <div class="cm-row">
+          <select id="cmNodeType">
+            <option value="username">Username</option>
+            <option value="email">Email</option>
+            <option value="domain">Domain / IP</option>
+            <option value="phone">Phone</option>
+            <option value="location">Location</option>
+            <option value="person">Person / alias</option>
+            <option value="org">Organization</option>
+            <option value="other">Other</option>
+          </select>
+          <select id="cmParent">
+            <option value="root">Connects to: root subject</option>
+          </select>
+        </div>
+        <button id="cmAddBtn">+ Add node</button>
+        <div class="cm-list" id="cmList"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>AUTO MEMORIES — for research and verification, not surveillance.</span>
+    <em>"Words carried further than the hand that wrote them."</em>
+  </footer>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- ASCII quill, drawn once ---------------- */
+const quillFrames = [
+"                                       .,,,\n" +
+"                                   ,;;;;;;;;;\n" +
+"                               ,;;;;;;;;;;;;;;\n" +
+"                           ,;;;;;;;;;;;;;;;;;;;\n" +
+"                       ,;;;;;;;;;;;;;;;;;;;;\n" +
+"                   ,;;;;;;;;;;;;;;;;;;;\n" +
+"               ,;;;;;;;;;;;;;;;;;\n" +
+"           ,;;;;;;;;;;;;;;;\n" +
+"        ,;;;;;;;;;;;\n" +
+"      ,;;;;;;;\n" +
+"    ,;;;;\n" +
+"   ,;;\n" +
+"    \\\n" +
+"     \\\n" +
+"      \\\n" +
+"       \\\n" +
+"        *  ink"
+];
+
+const quillEl = document.getElementById('quillArt');
+quillEl.textContent = quillFrames[0];
+
+/* ---------------- typewriter line ---------------- */
+const lines = [
+  "> checking public breach records",
+  "> resolving domain registration history",
+  "> cross-referencing handles across platforms",
+  "> reading what was left in plain sight"
+];
+let li = 0, ci = 0, typingEl = document.getElementById('typeLine'), deleting = false;
+function typeTick(){
+  const full = lines[li];
+  if(!deleting){
+    ci++;
+    typingEl.textContent = full.slice(0, ci);
+    if(ci === full.length){ deleting = true; setTimeout(typeTick, 1600); return; }
+  } else {
+    ci--;
+    typingEl.textContent = full.slice(0, ci);
+    if(ci === 0){ deleting = false; li = (li+1) % lines.length; }
+  }
+  setTimeout(typeTick, deleting ? 25 : 45);
+}
+typeTick();
+
+/* ---------------- session clock ---------------- */
+document.getElementById('sessionTime').textContent =
+  new Date().toLocaleString(undefined, {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'short', year:'numeric'});
+
+/* ---------------- tool data ---------------- */
+const TOOLS = {
+  username: {
+    label: "Username",
+    hint: "Copies the handle and opens each lookup — paste it into the search box.",
+    cards: [
+      { idx:"01", title:"Cross-platform check", desc:"Search one handle across dozens of sites at once.", links:[
+        {name:"WhatsMyName", url:"https://whatsmyname.app/", copy:true},
+        {name:"Namechk", url:"https://namechk.com/", copy:true}
+      ]},
+      { idx:"02", title:"Code & developer trace", desc:"Repos, gists, and commit history tied to a handle.", links:[
+        {name:"GitHub search", url:(q)=>`https://github.com/search?q=${encodeURIComponent(q)}&type=users`},
+        {name:"GitLab search", url:(q)=>`https://gitlab.com/users/${encodeURIComponent(q)}`}
+      ]},
+      { idx:"03", title:"General web dork", desc:"A blunt but effective net across the open web.", links:[
+        {name:"Google — quoted handle", url:(q)=>`https://www.google.com/search?q="${encodeURIComponent(q)}"`}
+      ]}
+    ]
+  },
+  email: {
+    label: "Email",
+    hint: "Deep-links where possible, otherwise copies the address for you.",
+    cards: [
+      { idx:"01", title:"Breach exposure", desc:"Check whether the address appeared in known breaches.", links:[
+        {name:"Have I Been Pwned", url:(q)=>`https://haveibeenpwned.com/account/${encodeURIComponent(q)}`}
+      ]},
+      { idx:"02", title:"Reputation & risk", desc:"Signals on deliverability, disposability, and risk.", links:[
+        {name:"EmailRep", url:(q)=>`https://emailrep.io/${encodeURIComponent(q)}`}
+      ]},
+      { idx:"03", title:"Associated web mentions", desc:"Where else this address surfaces publicly.", links:[
+        {name:"Google — quoted email", url:(q)=>`https://www.google.com/search?q="${encodeURIComponent(q)}"`}
+      ]}
+    ]
+  },
+  domain: {
+    label: "Domain / IP",
+    hint: "These deep-link directly with your query.",
+    cards: [
+      { idx:"01", title:"Registration record", desc:"Who registered it, when, and through whom.", links:[
+        {name:"WHOIS lookup", url:(q)=>`https://who.is/whois/${encodeURIComponent(q)}`}
+      ]},
+      { idx:"02", title:"Certificate history", desc:"Every TLS certificate ever issued for this name.", links:[
+        {name:"crt.sh", url:(q)=>`https://crt.sh/?q=${encodeURIComponent(q)}`}
+      ]},
+      { idx:"03", title:"Exposed services", desc:"Open ports and banners seen on the wider internet.", links:[
+        {name:"Shodan", url:(q)=>`https://www.shodan.io/search?query=${encodeURIComponent(q)}`}
+      ]},
+      { idx:"04", title:"Attack surface & exposure", desc:"Subdomains, misconfigurations, and leaked services tied to a domain.", links:[
+        {name:"FullHunt", url:(q)=>`https://fullhunt.io/search/?query=${encodeURIComponent(q)}`},
+        {name:"LeakIX", url:(q)=>`https://leakix.net/search?q=${encodeURIComponent(q)}`},
+        {name:"Web Check", url:"https://web-check.xyz/", copy:true}
+      ]}
+    ]
+  },
+  image: {
+    label: "Image",
+    hint: "These tools need an upload — they'll open ready for one.",
+    cards: [
+      { idx:"01", title:"Reverse search", desc:"Find where an image has appeared before.", links:[
+        {name:"TinEye", url:"https://tineye.com/"},
+        {name:"Google Images", url:"https://images.google.com/"}
+      ]},
+      { idx:"02", title:"Wide-net reverse search", desc:"Broader index, useful for east-Asian sources.", links:[
+        {name:"Yandex Images", url:"https://yandex.com/images/"}
+      ]},
+      { idx:"03", title:"Embedded metadata", desc:"Camera, timestamp, and GPS data left inside the file itself.", links:[
+        {name:"Jimpl (EXIF viewer)", url:"https://jimpl.com/"},
+        {name:"ExifTool (reference)", url:"https://exiftool.org/"}
+      ]}
+    ]
+  },
+  phone: {
+    label: "Phone",
+    hint: "Copies the number for you — most of these are manual-entry.",
+    cards: [
+      { idx:"01", title:"Carrier & line type", desc:"Basic carrier, line type, and region lookup.", links:[
+        {name:"NumLookup", url:"https://www.numlookup.com/", copy:true}
+      ]},
+      { idx:"02", title:"Caller reputation", desc:"Community-reported spam and scam signals.", links:[
+        {name:"Truecaller web", url:"https://www.truecaller.com/", copy:true}
+      ]}
+    ]
+  },
+  social: {
+    label: "Social",
+    hint: "Copies the query, then opens each platform's own search.",
+    cards: [
+      { idx:"01", title:"Cross-network mentions", desc:"Aggregated recent posts mentioning a term.", links:[
+        {name:"Social Searcher", url:"https://www.social-searcher.com/", copy:true}
+      ]},
+      { idx:"02", title:"Platform-native search", desc:"Search directly within the largest networks.", links:[
+        {name:"X (Twitter) search", url:(q)=>`https://twitter.com/search?q=${encodeURIComponent(q)}`},
+        {name:"Reddit search", url:(q)=>`https://www.reddit.com/search/?q=${encodeURIComponent(q)}`}
+      ]}
+    ]
+  },
+  archives: {
+    label: "Archives & Metadata",
+    hint: "Mostly reference tools — they open ready to use, some need a paste-in.",
+    cards: [
+      { idx:"01", title:"Historical snapshots", desc:"See a page or site as it looked in the past, even after it's changed or gone.", links:[
+        {name:"Wayback Machine", url:(q)=>`https://web.archive.org/web/*/${encodeURIComponent(q)}`}
+      ]},
+      { idx:"02", title:"Mapping & geodata", desc:"Open, editable map data — useful for cross-referencing a location.", links:[
+        {name:"OpenStreetMap", url:(q)=>`https://www.openstreetmap.org/search?query=${encodeURIComponent(q)}`},
+        {name:"Overpass Turbo", url:"https://overpass-turbo.eu/", copy:true}
+      ]},
+      { idx:"03", title:"Content verification toolkit", desc:"Bellingcat's public collection of tools for verifying dates, locations, and authenticity of published material.", links:[
+        {name:"Bellingcat Toolkit", url:"https://bellingcat.gitbook.io/toolkit"}
+      ]}
+    ]
+  },
+  frameworks: {
+    label: "Frameworks",
+    hint: "Mostly developer tools and directories — these open the project page or reference site.",
+    cards: [
+      { idx:"01", title:"Automated recon", desc:"Command-line tools that automate collection of emails, subdomains, and public footprint data.", links:[
+        {name:"theHarvester", url:"https://github.com/laramies/theHarvester"},
+        {name:"SpiderFoot", url:"https://github.com/smicallef/spiderfoot"},
+        {name:"Photon", url:"https://github.com/s0md3v/Photon"},
+        {name:"Recon-ng", url:"https://github.com/lanmaster53/recon-ng"}
+      ]},
+      { idx:"02", title:"Link analysis", desc:"Visual mapping of relationships between entities, domains, and infrastructure.", links:[
+        {name:"Maltego", url:"https://www.maltego.com/"}
+      ]},
+      { idx:"03", title:"Directories & curated lists", desc:"Maps of the OSINT landscape — where to look next, organized by category.", links:[
+        {name:"OSINT Framework", url:"https://osintframework.com/"},
+        {name:"Awesome OSINT (GitHub)", url:"https://github.com/jivoi/awesome-osint"}
+      ]}
+    ]
+  }
+};
+
+let activeCat = "username";
+const cardGrid = document.getElementById('cardGrid');
+const hintText = document.getElementById('hintText');
+const logList = document.getElementById('logList');
+const toast = document.getElementById('toast');
+const sessionLog = [];
+const customCache = {};
+
+const ICONS = {
+  username: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.3" y1="15.3" x2="21" y2="21"/></svg>`,
+  email: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="1"/><path d="M3 6.5l9 6.5 9-6.5"/></svg>`,
+  domain: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.8 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.8-3.8-9s1.3-6.4 3.8-9z"/></svg>`,
+  image: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="1"/><circle cx="8.5" cy="10" r="1.6"/><path d="M4 17l5.5-5.5L13 15l3-3 4 5"/></svg>`,
+  phone: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h4l1.5 4.5-2.3 1.8a12 12 0 0 0 5.5 5.5l1.8-2.3L21 14v4a2 2 0 0 1-2 2c-8 0-15-7-15-15a2 2 0 0 1 2-2z"/></svg>`,
+  social: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h17v11h-9L7 20v-3.5H3.5z"/></svg>`,
+  archives: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="5" rx="1"/><path d="M4 9v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9"/><line x1="10" y1="13" x2="14" y2="13"/></svg>`,
+  frameworks: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.3"/><circle cx="18" cy="6" r="2.3"/><circle cx="12" cy="18" r="2.3"/><path d="M7.8 7.3L11 16M16.2 7.3L13 16M8.3 6h7.4"/></svg>`
+};
+
+/* ---- persistent storage for user-added sites, using real browser localStorage
+   (this runs as a standalone site, not inside Claude's preview, so localStorage
+   is the correct choice here — it persists per-visitor, per-domain, forever) ---- */
+async function loadCustomSites(cat){
+  if(customCache[cat]) return customCache[cat];
+  try{
+    const raw = localStorage.getItem(`automemories:sites:${cat}`);
+    customCache[cat] = raw ? JSON.parse(raw) : [];
+  }catch(e){
+    customCache[cat] = [];
+  }
+  return customCache[cat];
+}
+async function saveCustomSites(cat, arr){
+  customCache[cat] = arr;
+  try{
+    localStorage.setItem(`automemories:sites:${cat}`, JSON.stringify(arr));
+  }catch(e){ /* storage unavailable (private browsing, quota, etc.) — kept in memory only for this visit */ }
+}
+
+function buildCustomUrl(template, query){
+  if(template.includes('{q}')) return template.replace(/\{q\}/g, encodeURIComponent(query || ''));
+  return template;
+}
+
+function toRoman(num){
+  const table = [[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+  let res = '';
+  for(const [v,s] of table){ while(num >= v){ res += s; num -= v; } }
+  return res;
+}
+
+async function renderCards(cat){
+  const data = TOOLS[cat];
+  hintText.textContent = data.hint;
+  cardGrid.innerHTML = "";
+  data.cards.forEach((card, i)=>{
+    const el = document.createElement('div');
+    el.className = 'card';
+    const roman = toRoman(i + 1);
+    const linksHtml = card.links.map(l=>{
+      return `<a href="#" data-name="${l.name}">${l.name}<span class="arrow">↗</span></a>`;
+    }).join('');
+    el.innerHTML = `
+      <span class="idx">${ICONS[cat] || ''}<span class="roman">${roman}</span> · ${data.label}</span>
+      <h3>${card.title}</h3>
+      <p>${card.desc}</p>
+      <div class="links">${linksHtml}</div>
+    `;
+    const anchors = el.querySelectorAll('a');
+    anchors.forEach((a, j)=>{
+      a.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const link = card.links[j];
+        const q = document.getElementById('queryInput').value.trim();
+        openLink(link, q, cat, card.title);
+      });
+    });
+    cardGrid.appendChild(el);
+  });
+
+  // custom sources card — full-width row, always last
+  const customEl = document.createElement('div');
+  customEl.className = 'card custom';
+  const nextRoman = toRoman(data.cards.length + 1);
+  customEl.innerHTML = `
+    <div class="custom-main">
+      <span class="idx">${ICONS[cat] || ''}<span class="roman">${nextRoman}</span> · ${data.label}</span>
+      <h3>Your sources</h3>
+      <p>Sites you've added yourself — as many as you like, searched the same way as the ones above.</p>
+      <div class="custom-list" id="customList-${cat}"><div class="custom-empty">loading…</div></div>
+    </div>
+    <div class="add-form">
+      <input type="text" id="newName-${cat}" placeholder="Site name (e.g. Sherlock)">
+      <input type="text" id="newUrl-${cat}" placeholder="URL — use {q} where the query goes">
+      <button id="addBtn-${cat}">+ Add site</button>
+      <div class="tip">Include <code>{q}</code> to deep-link your query, e.g.<br><code>https://example.com/search?u={q}</code>. Leave it out to just open the homepage and copy your query to the clipboard.</div>
+    </div>
+  `;
+  cardGrid.appendChild(customEl);
+
+  const sites = await loadCustomSites(cat);
+  renderCustomList(cat, sites);
+
+  document.getElementById(`addBtn-${cat}`).addEventListener('click', async ()=>{
+    const nameInput = document.getElementById(`newName-${cat}`);
+    const urlInput = document.getElementById(`newUrl-${cat}`);
+    const name = nameInput.value.trim();
+    let url = urlInput.value.trim();
+    if(!name || !url){ showToast('Give it a name and a URL first.'); return; }
+    if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    const list = await loadCustomSites(cat);
+    list.push({ id: Date.now().toString(36), name, url });
+    await saveCustomSites(cat, list);
+    renderCustomList(cat, list);
+    nameInput.value = ''; urlInput.value = '';
+    showToast(`Added ${name} to ${data.label}.`);
+  });
+}
+
+function renderCustomList(cat, sites){
+  const container = document.getElementById(`customList-${cat}`);
+  if(!container) return;
+  if(sites.length === 0){
+    container.innerHTML = `<div class="custom-empty">no sites added yet</div>`;
+    return;
+  }
+  container.innerHTML = sites.map(s=>`
+    <div class="custom-row">
+      <a href="#" class="site-info" data-id="${s.id}">
+        <span class="site-name">${escapeHtml(s.name)}</span>
+        <span class="site-url">${escapeHtml(s.url)}</span>
+      </a>
+      <button class="rm" data-id="${s.id}" title="Remove">×</button>
+    </div>
+  `).join('');
+  container.querySelectorAll('.site-info').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const site = sites.find(s=>s.id === a.dataset.id);
+      const q = document.getElementById('queryInput').value.trim();
+      const finalUrl = buildCustomUrl(site.url, q);
+      const deep = site.url.includes('{q}');
+      if(!deep && q){ navigator.clipboard?.writeText(q).catch(()=>{}); showToast(`Copied "${q}" — paste it into ${site.name}`); }
+      else if(deep && !q){ showToast('Type something to trace first.'); return; }
+      else showToast(`Opening ${site.name}…`);
+      window.open(finalUrl, '_blank', 'noopener');
+      recordEntry(q || '(no query)', activeCat, site.name);
+    });
+  });
+  container.querySelectorAll('.rm').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const updated = sites.filter(s=>s.id !== btn.dataset.id);
+      await saveCustomSites(cat, updated);
+      renderCustomList(cat, updated);
+    });
+  });
+}
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>toast.classList.remove('show'), 2400);
+}
+
+function openLink(link, query, cat, cardTitle){
+  const finalUrl = typeof link.url === 'function' ? link.url(query || '') : link.url;
+  if(link.copy && query){
+    navigator.clipboard?.writeText(query).catch(()=>{});
+    showToast(`Copied "${query}" — paste it into ${link.name}`);
+  } else if(!query && typeof link.url === 'function'){
+    showToast(`Type something to trace first.`);
+    return;
+  } else {
+    showToast(`Opening ${link.name}…`);
+  }
+  window.open(finalUrl, '_blank', 'noopener');
+  recordEntry(query || '(no query)', cat, link.name);
+}
+
+function recordEntry(query, cat, tool){
+  sessionLog.unshift({query, cat, tool, time: new Date().toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})});
+  renderLog();
+}
+
+function renderLog(){
+  if(sessionLog.length === 0){
+    logList.innerHTML = `<div class="log-empty">— no entries yet —<br>your first trace will<br>be recorded here</div>`;
+    return;
+  }
+  logList.innerHTML = sessionLog.slice(0,12).map(e=>`
+    <div class="log-entry">
+      <span>${escapeHtml(e.query)}<br><span class="cat">${e.cat} · ${escapeHtml(e.tool)}</span></span>
+      <span>${e.time}</span>
+    </div>
+  `).join('');
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+document.getElementById('tabs').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.tab');
+  if(!btn) return;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  activeCat = btn.dataset.cat;
+  moveIndicator(btn);
+  renderCards(activeCat);
+});
+
+function moveIndicator(btn){
+  const indicator = document.getElementById('tabIndicator');
+  const tabsEl = document.getElementById('tabs');
+  const tabRect = btn.getBoundingClientRect();
+  const parentRect = tabsEl.getBoundingClientRect();
+  indicator.style.left = (tabRect.left - parentRect.left) + 'px';
+  indicator.style.width = tabRect.width + 'px';
+}
+window.addEventListener('load', ()=>{
+  moveIndicator(document.querySelector('.tab.active'));
+});
+window.addEventListener('resize', ()=>{
+  moveIndicator(document.querySelector('.tab.active'));
+});
+document.getElementById('queryInput').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter') document.getElementById('traceBtn').click();
+});
+
+document.getElementById('traceBtn').addEventListener('click', ()=>{
+  const q = document.getElementById('queryInput').value.trim();
+  if(!q){ showToast('Type something to trace first.'); return; }
+  const data = TOOLS[activeCat];
+  const first = data.cards[0].links[0];
+  openLink(first, q, activeCat, data.cards[0].title);
+});
+
+renderCards(activeCat);
+requestAnimationFrame(()=> moveIndicator(document.querySelector('.tab.active')));
+
+/* ================= CASE MAP ================= */
+/* Purely manual: nodes only exist because the person typed them in.
+   Nothing here is fetched, guessed, or looked up automatically. */
+const CM_TYPE_ICON = {
+  username: '⌕', email: '✉', domain: '◍', phone: '☏',
+  location: '⚲', person: '☺', org: '▣', other: '·'
+};
+let cmState = { root: '', nodes: [] }; // nodes: [{id, name, type, parentId}]
+
+function cmSlug(s){ return (s||'').trim().toLowerCase().replace(/\s+/g,'-').slice(0,60) || 'untitled'; }
+
+function cmStorageKey(){ return `automemories:casemap:${cmSlug(cmState.root)}`; }
+
+function cmLoad(){
+  try{
+    const raw = localStorage.getItem('automemories:casemap:_lastroot');
+    const root = raw || '';
+    cmState.root = root;
+    const saved = localStorage.getItem(`automemories:casemap:${cmSlug(root)}`);
+    cmState.nodes = saved ? JSON.parse(saved) : [];
+  }catch(e){ cmState = { root:'', nodes: [] }; }
+}
+function cmSave(){
+  try{
+    localStorage.setItem('automemories:casemap:_lastroot', cmState.root);
+    localStorage.setItem(cmStorageKey(), JSON.stringify(cmState.nodes));
+  }catch(e){ /* kept in memory only for this visit */ }
+}
+
+function cmPolar(cx, cy, radius, angleDeg){
+  const rad = (angleDeg - 90) * Math.PI / 180;
+  return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
+}
+
+function cmRender(){
+  const svg = document.getElementById('casemapSvg');
+  const W = 860, H = 420, CX = W/2, CY = H/2 + 6;
+  const rootLabel = cmState.root.trim() || 'untitled subject';
+
+  const primary = cmState.nodes.filter(n => n.parentId === 'root');
+  const secondaryByParent = {};
+  cmState.nodes.filter(n => n.parentId !== 'root').forEach(n=>{
+    (secondaryByParent[n.parentId] = secondaryByParent[n.parentId] || []).push(n);
+  });
+
+  let svgParts = [];
+  const R1 = 140;
+  const positions = { root: {x:CX, y:CY} };
+
+  primary.forEach((n, i)=>{
+    const angle = (360 / Math.max(primary.length,1)) * i;
+    positions[n.id] = cmPolar(CX, CY, R1, angle);
+  });
+  primary.forEach((n, i)=>{
+    const angle = (360 / Math.max(primary.length,1)) * i;
+    const kids = secondaryByParent[n.id] || [];
+    kids.forEach((k, j)=>{
+      const spread = 26;
+      const kAngle = angle + (j - (kids.length-1)/2) * spread;
+      positions[k.id] = cmPolar(CX, CY, R1 + 95, kAngle);
+    });
+  });
+
+  // edges first (so nodes draw on top)
+  cmState.nodes.forEach(n=>{
+    const from = positions[n.parentId] || positions.root;
+    const to = positions[n.id];
+    if(!to) return;
+    svgParts.push(`<line class="cm-edge" x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}"/>`);
+  });
+
+  // root node
+  svgParts.push(`
+    <g class="cm-node cm-node-root">
+      <circle class="cm-node-circle" cx="${CX}" cy="${CY}" r="34"/>
+      <text class="cm-node-label" x="${CX}" y="${CY+5}">${escapeHtml(rootLabel.length>16 ? rootLabel.slice(0,15)+'…' : rootLabel)}</text>
+    </g>
+  `);
+
+  // other nodes
+  cmState.nodes.forEach(n=>{
+    const p = positions[n.id];
+    if(!p) return;
+    const short = n.name.length>14 ? n.name.slice(0,13)+'…' : n.name;
+    svgParts.push(`
+      <g class="cm-node" data-id="${n.id}">
+        <circle class="cm-node-circle" cx="${p.x}" cy="${p.y}" r="26"/>
+        <text class="cm-node-type" x="${p.x}" y="${p.y-32}">${n.type}</text>
+        <text class="cm-node-label" x="${p.x}" y="${p.y+4}">${escapeHtml(short)}</text>
+        <g class="cm-node-x" data-id="${n.id}" transform="translate(${p.x+18},${p.y-18})">
+          <circle r="9"/><text y="4">×</text>
+        </g>
+      </g>
+    `);
+  });
+
+  svg.innerHTML = svgParts.join('');
+
+  svg.querySelectorAll('.cm-node-x').forEach(g=>{
+    g.addEventListener('click', ()=>{
+      const id = g.dataset.id;
+      cmState.nodes = cmState.nodes.filter(n => n.id !== id && n.parentId !== id);
+      cmSave();
+      cmRender();
+      cmRenderList();
+      cmRefreshParentOptions();
+    });
+  });
+}
+
+function cmRenderList(){
+  const list = document.getElementById('cmList');
+  if(cmState.nodes.length === 0){
+    list.innerHTML = `<div class="cm-empty">no nodes yet — add the first thing you've confirmed</div>`;
+    return;
+  }
+  list.innerHTML = cmState.nodes.map(n=>`
+    <div class="cm-list-row">
+      <span><span class="cm-list-type">${n.type}</span>${escapeHtml(n.name)}</span>
+      <button class="rm" data-id="${n.id}" title="Remove">×</button>
+    </div>
+  `).join('');
+  list.querySelectorAll('.rm').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = btn.dataset.id;
+      cmState.nodes = cmState.nodes.filter(n => n.id !== id && n.parentId !== id);
+      cmSave();
+      cmRender();
+      cmRenderList();
+      cmRefreshParentOptions();
+    });
+  });
+}
+
+function cmRefreshParentOptions(){
+  const sel = document.getElementById('cmParent');
+  const current = sel.value;
+  sel.innerHTML = `<option value="root">Connects to: root subject</option>` +
+    cmState.nodes.map(n => `<option value="${n.id}">Connects to: ${escapeHtml(n.name)}</option>`).join('');
+  if([...sel.options].some(o=>o.value===current)) sel.value = current;
+}
+
+document.getElementById('cmRoot').addEventListener('input', (e)=>{
+  cmState.root = e.target.value;
+  cmSave();
+  cmRender();
+});
+
+document.getElementById('cmAddBtn').addEventListener('click', ()=>{
+  const nameInput = document.getElementById('cmNodeName');
+  const name = nameInput.value.trim();
+  if(!name){ showToast('Give the node a name first.'); return; }
+  const type = document.getElementById('cmNodeType').value;
+  const parentId = document.getElementById('cmParent').value;
+  cmState.nodes.push({ id: Date.now().toString(36), name, type, parentId });
+  cmSave();
+  nameInput.value = '';
+  cmRender();
+  cmRenderList();
+  cmRefreshParentOptions();
+});
+
+cmLoad();
+document.getElementById('cmRoot').value = cmState.root;
+cmRender();
+cmRenderList();
+cmRefreshParentOptions();
+
+</script>
+</body>
+</html>
