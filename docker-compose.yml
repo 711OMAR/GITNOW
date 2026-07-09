@@ -1,0 +1,85 @@
+"""
+Real, working connectors that need NO API key.
+
+  * CrtShSource   -> certificate transparency logs (crt.sh)  -> subdomains + certs
+  * WaybackSource -> Internet Archive availability + CDX      -> historical snapshots
+
+These query only public endpoints and return normalized entities/relationships.
+"""
+from __future__ import annotations
+
+from ..base import Entity, EntityType, Relationship, Source, SourceResult, dedupe_entities
+
+
+class CrtShSource(Source):
+    slug = "crtsh"
+    name = "crt.sh"
+    category = "certificates"
+    requires_key = False
+    accepts = (EntityType.DOMAIN,)
+    rate_limit_per_min = 30
+
+    async def fetch(self, entity_type: EntityType, value: str) -> SourceResult:
+        domain = value.strip().lower().lstrip("*.")
+        data = await self._get_json(
+            "https://crt.sh/", params={"q": f"%.{domain}", "output": "json"}
+        )
+        root = Entity(EntityType.DOMAIN, domain, {"role": "seed"}, confidence=1.0)
+        entities: list[Entity] = [root]
+        rels: list[Relationship] = []
+        seen_names: set[str] = set()
+
+        for row in data[:500]:  # cap payload
+            issuer = row.get("issuer_name", "")
+            for name in (row.get("name_value", "") or "").splitlines():
+                name = name.strip().lower().lstrip("*.")
+                if not name or name in seen_names or not name.endswith(domain):
+                    continue
+                seen_names.add(name)
+                sub = Entity(EntityType.DOMAIN, name,
+                             {"discovered_via": "certificate transparency"}, confidence=0.8)
+                entities.append(sub)
+                rels.append(Relationship(root.key, sub.key, "subdomain", 0.8))
+
+            cert_id = str(row.get("id"))
+            cert = Entity(EntityType.CERTIFICATE, cert_id,
+                          {"issuer": issuer, "not_before": row.get("not_before"),
+                           "not_after": row.get("not_after"),
+                           "common_name": row.get("common_name")}, confidence=0.9)
+            entities.append(cert)
+            rels.append(Relationship(root.key, cert.key, "secured by", 0.9))
+
+        return SourceResult(
+            source=self.slug,
+            entities=dedupe_entities(entities),
+            relationships=rels,
+            raw={"rows": len(data)},
+        )
+
+
+class WaybackSource(Source):
+    slug = "wayback"
+    name = "Wayback Machine"
+    category = "archive"
+    requires_key = False
+    accepts = (EntityType.DOMAIN, EntityType.URL)
+    rate_limit_per_min = 20
+
+    async def fetch(self, entity_type: EntityType, value: str) -> SourceResult:
+        target = value.strip()
+        avail = await self._get_json(
+            "https://archive.org/wayback/available", params={"url": target}
+        )
+        snap = (avail.get("archived_snapshots") or {}).get("closest") or {}
+        root = Entity(entity_type, target, confidence=1.0)
+        entities = [root]
+        rels: list[Relationship] = []
+        if snap.get("url"):
+            archived = Entity(
+                EntityType.WEBSITE, snap["url"],
+                {"timestamp": snap.get("timestamp"), "status": snap.get("status"),
+                 "note": "closest archived snapshot"}, confidence=0.9)
+            entities.append(archived)
+            rels.append(Relationship(root.key, archived.key, "archived as", 0.9))
+        return SourceResult(source=self.slug, entities=entities,
+                            relationships=rels, raw=avail)

@@ -1,0 +1,111 @@
+"""
+Connectors that require an API key.
+
+`IPinfoSource` is fully implemented (drop in a token and it works).
+`ShodanSource` and `VirusTotalSource` show the exact same pattern; the rest of
+the providers from the spec (Censys, SecurityTrails, HaveIBeenPwned, AbuseIPDB,
+GreyNoise, AlienVault OTX, Hunter.io, BuiltWith, WhoisXML, GitHub, URLScan,
+Reddit, Mastodon, Bluesky, RSS) are added by copying this shape: set the class
+attributes, implement `fetch`, register in registry.py.
+"""
+from __future__ import annotations
+
+from ..base import Entity, EntityType, Relationship, Source, SourceResult
+
+
+class IPinfoSource(Source):
+    slug = "ipinfo"
+    name = "IPinfo"
+    category = "geo"
+    requires_key = True
+    accepts = (EntityType.IP,)
+    rate_limit_per_min = 60
+
+    async def fetch(self, entity_type: EntityType, value: str) -> SourceResult:
+        ip = value.strip()
+        data = await self._get_json(
+            f"https://ipinfo.io/{ip}/json", params={"token": self.api_key}
+        )
+        root = Entity(EntityType.IP, ip, {
+            "hostname": data.get("hostname"),
+            "org": data.get("org"),
+            "city": data.get("city"),
+            "region": data.get("region"),
+            "country": data.get("country"),
+            "loc": data.get("loc"),
+        }, confidence=1.0)
+        entities = [root]
+        rels: list[Relationship] = []
+        if data.get("org"):
+            org = Entity(EntityType.ORGANIZATION, data["org"],
+                         {"source": "ipinfo asn"}, confidence=0.7)
+            entities.append(org)
+            rels.append(Relationship(root.key, org.key, "announced by", 0.7))
+        return SourceResult(source=self.slug, entities=entities,
+                            relationships=rels, raw=data)
+
+
+class ShodanSource(Source):
+    """Exposed-host lookup. Requires a Shodan API key."""
+    slug = "shodan"
+    name = "Shodan"
+    category = "network"
+    requires_key = True
+    accepts = (EntityType.IP,)
+    rate_limit_per_min = 60
+
+    async def fetch(self, entity_type: EntityType, value: str) -> SourceResult:
+        ip = value.strip()
+        data = await self._get_json(
+            f"https://api.shodan.io/shodan/host/{ip}", params={"key": self.api_key}
+        )
+        root = Entity(EntityType.IP, ip, {
+            "ports": data.get("ports"),
+            "isp": data.get("isp"),
+            "os": data.get("os"),
+            "country": data.get("country_name"),
+            "hostnames": data.get("hostnames"),
+        }, confidence=1.0)
+        entities = [root]
+        rels: list[Relationship] = []
+        for host in (data.get("hostnames") or [])[:20]:
+            d = Entity(EntityType.DOMAIN, host, {}, confidence=0.7)
+            entities.append(d)
+            rels.append(Relationship(root.key, d.key, "resolves to", 0.7))
+        return SourceResult(source=self.slug, entities=entities,
+                            relationships=rels, raw=data)
+
+
+class VirusTotalSource(Source):
+    """Reputation for domains/IPs/hashes/urls. Requires a VirusTotal API key."""
+    slug = "virustotal"
+    name = "VirusTotal"
+    category = "reputation"
+    requires_key = True
+    accepts = (EntityType.DOMAIN, EntityType.IP, EntityType.HASH, EntityType.URL)
+    rate_limit_per_min = 4  # public VT tier
+
+    _PATHS = {
+        EntityType.DOMAIN: "domains",
+        EntityType.IP: "ip_addresses",
+        EntityType.HASH: "files",
+        EntityType.URL: "urls",
+    }
+
+    async def fetch(self, entity_type: EntityType, value: str) -> SourceResult:
+        path = self._PATHS[entity_type]
+        # NB: VT wants an x-apikey header; _get_json passes headers through kwargs.
+        data = await self._get_json(
+            f"https://www.virustotal.com/api/v3/{path}/{value.strip()}",
+            headers={"x-apikey": self.api_key or ""},
+        )
+        stats = (((data.get("data") or {}).get("attributes") or {})
+                 .get("last_analysis_stats") or {})
+        malicious = stats.get("malicious", 0)
+        total = sum(stats.values()) or 1
+        root = Entity(entity_type, value.strip(), {
+            "malicious": malicious,
+            "detection_ratio": f"{malicious}/{total}",
+            "reputation": ((data.get("data") or {}).get("attributes") or {}).get("reputation"),
+        }, confidence=1.0)
+        return SourceResult(source=self.slug, entities=[root], raw=stats)
